@@ -1,10 +1,7 @@
-Emotion Analyzer App
-
-This is a Flask-based application that analyzes emotions in text using a Hugging Face model.
-
-## Prerequisites
-
-- Python 3.10 or higher
+Esta é uma aplicação que utiliza d Flask para a partir de um texto retornar as emoções expressas no determinado texto.
+- Pré-requisitos
+Python 3.10 or higher
+- Passo a Passo
 Primeiro Passo: cd C:\Path
 Segundo Passo: python -m venv venv
 Terceiro Passo: venv\Scripts\activate
