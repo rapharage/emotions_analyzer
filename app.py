@@ -1,40 +1,31 @@
 from flask import Flask, request, jsonify
 from transformers import pipeline
 
-# Initialize Flask app
+# Initialize the Flask app
 app = Flask(__name__)
 
-# Load Hugging Face's emotion analysis pipeline
-emotion_analyzer = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base", return_all_scores=True)
+# Initialize the Hugging Face sentiment analysis pipeline
+emotion_pipeline = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base")
 
-@app.route('/')
-def home():
-    return jsonify({"message": "Emotion Analysis API is live!"})
-
+# Define the route to analyze emotions
 @app.route('/analyze', methods=['POST'])
 def analyze_emotion():
-    try:
-        # Get text input from the request
-        data = request.json
-        text = data.get("text", "")
+    data = request.get_json()  # Get JSON data from the request
+    text = data.get('text', '')  # Get the 'text' field from the JSON
 
-        if not text:
-            return jsonify({"error": "No text provided for analysis"}), 400
+    if not text:
+        return jsonify({'error': 'No text provided'}), 400
 
-        # Analyze the emotions in the text
-        results = emotion_analyzer(text)
+    # Perform the emotion analysis using the Hugging Face model
+    result = emotion_pipeline(text, top_k=None)
 
-        # Format the response for better readability
-        formatted_results = [
-            {"emotion": result["label"], "score": round(result["score"], 4)}
-            for result in results[0]
-        ]
+    # Create a dictionary of emotions and their scores
+    emotions = [{'emotion': r['label'], 'score': r['score']} for r in result]
 
-        return jsonify({"text": text, "emotions": formatted_results})
+    # Return the analysis result
+    return jsonify({'text': text, 'emotions': emotions})
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# Run the Flask app
+# Run the app and bind it to the correct port
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Use Render's port or fallback to 5000
+    app.run(host="0.0.0.0", port=port, debug=True)
