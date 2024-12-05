@@ -1,37 +1,31 @@
-from flask import Flask, request, jsonify
+import gradio as gr
 from transformers import pipeline
-import os
 
-# Initialize the Flask app
-app = Flask(__name__)
-
-# Initialize the Hugging Face sentiment analysis pipeline
+# Inicializar o modelo de análise emocional da Hugging Face
 emotion_pipeline = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base")
 
-# Define a simple route for the home page (root)
-@app.route('/')
-def home():
-    return "Emotion Analyzer is running!"
-
-@app.route('/analyze', methods=['POST'])
-def analyze_emotion():
-    data = request.get_json()  # Get JSON data from the request
-    text = data.get('text', '')  # Get the 'text' field from the JSON
-
+# Função para analisar emoções
+def analyze_emotion(text):
     if not text:
-        return jsonify({'error': 'No text provided'}), 400
+        return "Erro: Nenhum texto fornecido."
 
-    # Perform the emotion analysis using the Hugging Face model
+    # Realizar a análise emocional
     result = emotion_pipeline(text, top_k=None)
 
-    # Create a dictionary of emotions and their scores
-    emotions = [{'emotion': r['label'], 'score': r['score']} for r in result]
+    # Criar uma lista formatada com emoções e suas pontuações
+    emotions = {r['label']: round(r['score'], 4) for r in result}
 
-    # Return the analysis result
-    return jsonify({'text': text, 'emotions': emotions})
+    return emotions
 
-# Run the app and bind it to the correct port
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))  # Use Render's port or fallback to 5000
-    app.run(host="0.0.0.0", port=port, debug=True)
+# Configuração da interface do Gradio
+interface = gr.Interface(
+    fn=analyze_emotion,  # Função de análise
+    inputs=gr.Textbox(lines=3, placeholder="Digite seu texto aqui..."),  # Entrada: caixa de texto
+    outputs=gr.JSON(label="Resultado das Emoções"),  # Saída: formato JSON
+    title="Analisador de Emoções",
+    description="Digite um texto para analisar as emoções predominantes usando um modelo pré-treinado da Hugging Face."
+)
 
+# Lançar a interface com o link compartilhável
+if __name__ == "__main__":
+    interface.launch(share=True)
